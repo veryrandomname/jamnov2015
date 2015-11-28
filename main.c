@@ -11,18 +11,22 @@
 typedef unsigned char byte;
 typedef unsigned int pos;
 
-typedef struct {
+struct za {
   byte z; // a state
   byte a; // a action
-} za;
+};
 
-typedef struct {
+typedef struct za za;
+
+struct animal {
   pos x; // x pos of animal
   pos y; // y pos of animal
   byte z; // state of animal
   byte a; // next action animal will perfom
   za d[NSTATES][NPERCEPTIONS]; //state translation function (States,Perception) -> (new State, Action)
-} animal;
+};
+
+typedef struct animal animal;
 
 animal* world[WORLDSIZE][WORLDSIZE][2]; //2d map with 2 animals at every tile
 
