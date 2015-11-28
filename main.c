@@ -28,8 +28,8 @@ struct animal {
   byte a; // next action animal will perfom
   sa d[NSTATES][NPERCEPTIONS]; //state translation function (States,Perception) -> (new State, Action)
 };
-void randolution(sa**, short);
-
+//void randolution(sa**, short);
+#include "randomize.c"
 
 typedef struct animal animal;
 
@@ -62,16 +62,4 @@ int main(int argc, char *argv[]) {
     return EXIT_SUCCESS;
 }
 
-void randolution(sa** d, short p){
-	for(byte i = 0; i < NPERCEPTIONS; ++i){
-	  for(byte j = 0; j < NSTATES; ++j){
-	    int r = rand()%100;
-	    if(r <= p){
-	      d[j][i].s = (char)rand()%NSTATES;
-	    }
-	    else{
-	      d[j][i].a = (char)rand()%NACTIONS;
-	    }
-	  }	
-	}
-}
+
