@@ -37,6 +37,9 @@ typedef struct sa sa;
 struct animal {
   byte s; // state of animal
   byte a; // next action animal will perfom
+  unsigned char r;// = (unsigned char)rand();  
+  unsigned char g;// = (unsigned char)rand();  
+  unsigned char b;// = (unsigned char)rand();
   sa d[NSTATES][NPERCEPTIONS]; //state translation function (States,Perception) -> (new State, Action)
 };
 
@@ -239,6 +242,9 @@ int main(int argc, char *argv[]) {
       animal a;
       a.s = 0;
       a.a = 0;
+      a.r = (unsigned char)rand();
+      a.b = (unsigned char)rand();
+      a.g = (unsigned char)rand();
       //a.d = malloc(sizeof(sa)*NSTATES*NPERCEPTIONS);
       allAnimals[i] = a;
       randolution(a.d,100);
@@ -258,11 +264,14 @@ int main(int argc, char *argv[]) {
         for (int x=0; x < WORLDSIZE; x++) {
           for (int y=0; y < WORLDSIZE; y++) {
             if (world[x][y].a1!=NULL)
+              SDL_SetRenderDrawColor(renderer, (*world[x][y].a1).r ,(*world[x][y].a1).g ,(*world[x][y].a1).b , 0);
               SDL_RenderDrawPoint(renderer, x*5+2, y*5+2);
             if (world[x][y].a2!=NULL)
+              SDL_SetRenderDrawColor(renderer, (*world[x][y].a2).r ,(*world[x][y].a2).g,(*world[x][y].a2).b, 0); 
               SDL_RenderDrawPoint(renderer, x*5+3, y*5+3);
           }
         }
+            SDL_SetRenderDrawColor(renderer, 0,0,0, 0); 
         SDL_RenderPresent(renderer);
 
         stepWorld();
@@ -301,6 +310,9 @@ animal makeChild(animal a, animal b, int p){
   }
   newChild.a = 0;
   newChild.s = a.s;
+  newChild.r = (a.r + b.r) /2;
+  newChild.g = (a.g + b.g) /2;
+  newChild.b = (a.b + b.b) /2;
   return newChild;
 
 }
