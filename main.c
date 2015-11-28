@@ -5,6 +5,7 @@
 #include <math.h>
 #include <time.h>
 #include <bit_array.h>
+#include "behaviour.c"
 
 #define NPERCEPTIONS 20
 #define NSTATES 100
