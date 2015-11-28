@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <SDL2/SDL.h>
 #include <math.h>
+#include <time.h>
 
 #define NPERCEPTIONS 20
 #define NSTATES 100
@@ -10,6 +11,8 @@
 
 typedef unsigned char byte;
 typedef unsigned int pos;
+
+
 
 struct sa {
   byte s; // a state
@@ -25,12 +28,15 @@ struct animal {
   byte a; // next action animal will perfom
   sa d[NSTATES][NPERCEPTIONS]; //state translation function (States,Perception) -> (new State, Action)
 };
+void randolution(sa**, short);
+
 
 typedef struct animal animal;
 
 animal* world[WORLDSIZE][WORLDSIZE][2]; //2d map with 2 animals at every tile
 
 int main(int argc, char *argv[]) {
+    srand((unsigned int)time(NULL));
     int posX = 100, posY = 100, width = 800, height = 600;
 
     SDL_Window *win = SDL_CreateWindow("Untitled", posX, posY, width, height, 0);
@@ -54,4 +60,18 @@ int main(int argc, char *argv[]) {
     SDL_DestroyWindow(win);
 
     return EXIT_SUCCESS;
+}
+
+void randolution(sa** d, short p){
+	for(byte i = 0; i < NPERCEPTIONS; ++i){
+	  for(byte j = 0; j < NSTATES; ++j){
+	    int r = rand()%100;
+	    if(r <= p){
+	      d[j][i].s = (char)rand()%NSTATES;
+	    }
+	    else{
+	      d[j][i].a = (char)rand()%NACTIONS;
+	    }
+	  }	
+	}
 }
