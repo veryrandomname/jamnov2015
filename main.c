@@ -86,12 +86,10 @@ animal makeChild(animal a, animal b, int p){
 	    if(r <= p)
 	      newChild.d[i][j] = a.d[i][j];	  
 	    else 
-	      newChild.d[i][j] = b.d[i][j];	  
+	      newChild.d[i][j] = b.d[i][j]; 
 	  }
   }
   return newChild;
-
-
 
 }
 
