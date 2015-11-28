@@ -89,6 +89,8 @@ animal makeChild(animal a, animal b, int p){
 	      newChild.d[i][j] = b.d[i][j]; 
 	  }
   }
+  newChild.a = 0;
+  newChild.s = a.s;
   return newChild;
 
 }
