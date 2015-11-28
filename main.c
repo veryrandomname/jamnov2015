@@ -1,9 +1,10 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <SDL2/SDL.h>
 #include <math.h>
-#include <bit_array.h>
 #include <time.h>
+#include <bit_array.h>
 
 #define NPERCEPTIONS 20
 #define NSTATES 100
@@ -162,6 +163,8 @@ void doActions(pos x, pos y) {
     
 }
 
+animal makeChild(animal, animal, int);
+void randolution(sa**, short);
 
 int main(int argc, char *argv[]) {
     int posX = 100, posY = 100, width = 800, height = 600;
@@ -188,3 +191,36 @@ int main(int argc, char *argv[]) {
 
     return EXIT_SUCCESS;
 }
+
+
+void randolution(sa** d, short p){
+	for(byte i = 0; i < NPERCEPTIONS; ++i){
+	  for(byte j = 0; j < NSTATES; ++j){
+	    int r = rand()%100;
+	    if(r <= p){
+	      d[j][i].s = (char)rand()%NSTATES;
+	    }
+	    else{
+	      d[j][i].a = (char)rand()%NACTIONS;
+	    }
+	  }	
+	}
+}
+animal makeChild(animal a, animal b, int p){
+	animal newChild; 
+	for(int i = 0; i < NSTATES; ++i){
+	  for(int j = 0; j < NPERCEPTIONS; ++j){
+	    int r = rand()%100;
+	    if(r <= p)
+	      newChild.d[i][j] = a.d[i][j];	  
+	    else 
+	      newChild.d[i][j] = b.d[i][j]; 
+	  }
+  }
+  newChild.a = 0;
+  newChild.s = a.s;
+  return newChild;
+
+}
+
+
