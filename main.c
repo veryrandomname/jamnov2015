@@ -28,12 +28,15 @@ struct animal {
   byte a; // next action animal will perfom
   sa d[NSTATES][NPERCEPTIONS]; //state translation function (States,Perception) -> (new State, Action)
 };
-//void randolution(sa**, short);
-#include "randomize.c"
-
+//void randolution(sa**, short);j
 typedef struct animal animal;
 
+
+//typedef struct sa sa;
+
 animal* world[WORLDSIZE][WORLDSIZE][2]; //2d map with 2 animals at every tile
+animal makeChild(animal, animal, int);
+void randolution(sa**, short);
 
 int main(int argc, char *argv[]) {
     srand((unsigned int)time(NULL));
@@ -62,4 +65,33 @@ int main(int argc, char *argv[]) {
     return EXIT_SUCCESS;
 }
 
+void randolution(sa** d, short p){
+	for(byte i = 0; i < NPERCEPTIONS; ++i){
+	  for(byte j = 0; j < NSTATES; ++j){
+	    int r = rand()%100;
+	    if(r <= p){
+	      d[j][i].s = (char)rand()%NSTATES;
+	    }
+	    else{
+	      d[j][i].a = (char)rand()%NACTIONS;
+	    }
+	  }	
+	}
+}
+animal makeChild(animal a, animal b, int p){
+	animal newChild; 
+	for(int i = 0; i < NSTATES; ++i){
+	  for(int j = 0; j < NPERCEPTIONS; ++j){
+	    int r = rand()%100;
+	    if(r <= p)
+	      newChild.d[i][j] = a.d[i][j];	  
+	    else 
+	      newChild.d[i][j] = b.d[i][j];	  
+	  }
+  }
+  return newChild;
+
+
+
+}
 
