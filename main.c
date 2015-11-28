@@ -11,19 +11,19 @@
 typedef unsigned char byte;
 typedef unsigned int pos;
 
-struct za {
-  byte z; // a state
+struct sa {
+  byte s; // a state
   byte a; // a action
 };
 
-typedef struct za za;
+typedef struct sa sa;
 
 struct animal {
   pos x; // x pos of animal
   pos y; // y pos of animal
-  byte z; // state of animal
+  byte s; // state of animal
   byte a; // next action animal will perfom
-  za d[NSTATES][NPERCEPTIONS]; //state translation function (States,Perception) -> (new State, Action)
+  sa d[NSTATES][NPERCEPTIONS]; //state translation function (States,Perception) -> (new State, Action)
 };
 
 typedef struct animal animal;
