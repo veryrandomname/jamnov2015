@@ -11,7 +11,7 @@
 #define NSTATES 255 //less states break stuff
 #define NACTIONS 9
 #define WORLDSIZE 100
-#define NANIMALS 20000
+#define NANIMALS 100000
 
 #define ACTION_MATE 1
 #define ACTION_ATTACK 2
@@ -22,7 +22,7 @@
 #define ACTION_LEFT 7
 #define ACTION_RIGHT 8
 
-#define PROPERTY_FOOD 8
+#define PROPERTY_FOOD 1
 
 typedef unsigned char byte;
 typedef unsigned int pos;
@@ -38,6 +38,7 @@ struct animal {
   byte s; // state of animal
   byte a; // next action animal will perfom
   sa d[NSTATES][NPERCEPTIONS]; //state translation function (States,Perception) -> (new State, Action)
+  byte hunger;
 };
 
 typedef struct animal animal;
@@ -165,8 +166,13 @@ void doActions(pos x, pos y) {
       //printf("TOOOT\n");
       //allAnimalsSIZE--;
     }
-    else if ((*a1).a == ACTION_EAT || (*a2).a == ACTION_EAT) //&& world[x][y].properties & PROPERTY_FOOD == PROPERTY_FOOD)
-      world[x][y].properties = world[x][y].properties ^ PROPERTY_FOOD;
+    else if ((*a1).a == ACTION_EAT || (*a2).a == ACTION_EAT){ //&& world[x][y].properties & PROPERTY_FOOD == PROPERTY_FOOD)
+      //world[x][y].properties = world[x][y].properties ^ PROPERTY_FOOD;
+      if(a1 != NULL)
+        (*a1).hunger += 1000;
+      if(a2 != NULL)
+        (*a2).hunger += 1000;
+    }
     else if ((*a2).a == ACTION_ATTACK && (*a1).a != ACTION_BLOCK){
       world[x][y].a1 = NULL;
       //printf("TOOOT\n");
@@ -223,6 +229,24 @@ void stepWorld() {
       doActions(x,y);
     }
   }
+
+  //hunger
+  for (int x=0; x < WORLDSIZE; x++) {
+    for (int y=0; y < WORLDSIZE; y++) {
+      if(world[x][y].a1 != NULL){
+        animal* a1 = world[x][y].a1;
+        (*a1).hunger -= 1;
+        if ((*a1).hunger == 0)
+          world[x][y].a1 = NULL;
+      }
+      if(world[x][y].a2 != NULL){
+        animal* a2 = world[x][y].a2;
+        (*a2).hunger -= 1;
+        if ((*a2).hunger == 0)
+          world[x][y].a2 = NULL;
+      }
+    }
+  }
 }
 
 
@@ -233,17 +257,25 @@ int main(int argc, char *argv[]) {
 
     SDL_Renderer *renderer = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
 
-    for (int i=5; i < NANIMALS/2; i++) {
+    for (int i=5; i < WORLDSIZE*WORLDSIZE-100; i++) {
       allAnimalsSIZE++;
       //sa d[NSTATES][NPERCEPTIONS]; //state translation function (States,Perception) -> (new State, Action)
       animal a;
       a.s = 0;
       a.a = 0;
+      a.hunger = 100;
       //a.d = malloc(sizeof(sa)*NSTATES*NPERCEPTIONS);
       allAnimals[i] = a;
       randolution(a.d,100);
 
       world[i%WORLDSIZE][i/WORLDSIZE].a1 = &allAnimals[i];
+    }
+
+    //food everywhere
+    for (int x=0; x < WORLDSIZE; x++) {
+      for (int y=0; y < WORLDSIZE; y++) {
+        world[x][y].properties = 1;
+      }
     }
 
     while (1) {
@@ -283,7 +315,10 @@ void randolution(sa d[NSTATES][NPERCEPTIONS], short p){
 	    int r = rand()%100;
 	    if(r <= p){
 	      d[j][i].s = (byte)rand()%NSTATES;
-	      d[j][i].a = (byte)rand()%NACTIONS;
+        if(rand()%100 > 70 )
+          d[j][i].a = (byte)rand()%NACTIONS;
+        else
+          d[j][i].a = ACTION_EAT;
 	    }
 	  }	
 	}
@@ -301,6 +336,7 @@ animal makeChild(animal a, animal b, int p){
   }
   newChild.a = 0;
   newChild.s = a.s;
+  newChild.hunger = a.hunger;
   return newChild;
 
 }
