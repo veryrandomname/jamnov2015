@@ -7,9 +7,10 @@
 #include <bit_array.h>
 
 #define NPERCEPTIONS 20
-#define NSTATES 100
-#define NACTIONS 20
+#define NSTATES 255 //less states break stuff
+#define NACTIONS 9
 #define WORLDSIZE 100
+#define NANIMALS 20000
 
 #define ACTION_MATE 1
 #define ACTION_ATTACK 2
@@ -50,23 +51,32 @@ typedef struct tile tile;
 
 tile world[WORLDSIZE][WORLDSIZE]; //2d map with 2 animals at every tile
 
+static int allAnimalsSIZE = 0;
+static animal allAnimals[NANIMALS];
+
 byte perceptionAt(pos x, pos y) {
   return world[x][y].properties;
 }
 
-void stepAnimal(animal a1, pos x, pos y) {
+
+animal makeChild(animal, animal, int);
+void randolution(sa d[NSTATES][NPERCEPTIONS], short);
+
+void stepAnimal(animal* a1, pos x, pos y) {
   BIT_ARRAY* b = bit_array_create(NSTATES);
   bit_array_clear_all(b);
   sa r;
-  r.s = a1.s;
+  r.s = (*a1).s;
   r.a = 0;
 
   while (r.a == 0 && bit_array_get_bit(b,r.s) == 0) {
-    r = a1.d[r.s][perceptionAt(x,y)];
+    r = (*a1).d[r.s][perceptionAt(x,y)];
     bit_array_set_bit(b,r.s);
   }
-  a1.s = r.s;
-  a1.a = r.a;
+  (*a1).s = r.s;
+  (*a1).a = r.a;
+
+  bit_array_free(b);
 }
 
 byte freePlace(pos x, pos y) {
@@ -100,19 +110,27 @@ sexPos nextFreePlace(pos x, pos y) {
 
 byte animalMoveHelper(pos x, pos y, byte whichAnimal, pos dx, pos dy) {
   if(freePlace(x+dx,y+dy)) {
-    tile t = world[x][y];
-    tile t2 = world[x+dx][y+dy];
-    if (t2.a1 == NULL) {
-      if(whichAnimal)
-        t2.a1 = t.a1;
-      else
-        t2.a1 = t.a2;
+    tile* t = &world[x][y];
+    tile* t2 = &world[x+dx][y+dy];
+    if ((*t2).a1 == NULL) {
+      if(whichAnimal){
+        (*t2).a1 = (*t).a1;
+        (*t).a1 = NULL;
       }
+      else{
+        (*t2).a1 = (*t).a2;
+        (*t).a2 = NULL;
+      }
+    }
     else {
-      if(whichAnimal)
-        t2.a2 = t.a1;
-      else
-        t2.a2 = t.a2;
+      if(whichAnimal){
+        (*t2).a2 = (*t).a1;
+        (*t).a1 = NULL;
+      }
+      else{
+        (*t2).a2 = (*t).a2;
+        (*t).a2 = NULL;
+      }
     }
     return 1;
   }
@@ -125,46 +143,87 @@ void doActions(pos x, pos y) {
   animal* a1 = t.a1;
   animal* a2 = t.a2;
 
+  if(x>1 && y > 1 && x < WORLDSIZE - 1 && y < WORLDSIZE -1){
   sexPos f = nextFreePlace(x,y);
+ 
+  if(a1 != NULL && a2 != NULL){
+    if ((*a2).a == ACTION_MATE && (*a1).a == ACTION_MATE && f.x != 2 && allAnimalsSIZE < NANIMALS ) {
+      //animal child = makeChild(*a1,*a2,50);
+      allAnimals[allAnimalsSIZE] = makeChild(*a1,*a2,50);
+      //printf("LEBEN\n");
+      tile* t2 = &world[x+f.x][y+f.y];
+      if ((*t2).a1 == NULL)
+        (*t2).a1 = &allAnimals[allAnimalsSIZE];
+      else
+        (*t2).a2 = &allAnimals[allAnimalsSIZE];
 
-  if (a1 != NULL && a2 != NULL && (*a2).a == ACTION_MATE && (*a1).a == ACTION_MATE && f.x != 2 ) {
-    animal child;//TODO = makeChild(*a1,*a2,50);
-    tile t2 = world[x+f.x][y+f.y];
-    if (t2.a1 == NULL)
-      t2.a1 = &child;
-    else
-      t2.a2 = &child;
+      allAnimalsSIZE++;
+    }
+    else if ((*a1).a == ACTION_ATTACK && (*a2).a != ACTION_BLOCK){
+      world[x][y].a2 = NULL;
+      //printf("TOOOT\n");
+      //allAnimalsSIZE--;
+    }
+    else if ((*a1).a == ACTION_EAT || (*a2).a == ACTION_EAT) //&& world[x][y].properties & PROPERTY_FOOD == PROPERTY_FOOD)
+      world[x][y].properties = world[x][y].properties ^ PROPERTY_FOOD;
+    else if ((*a2).a == ACTION_ATTACK && (*a1).a != ACTION_BLOCK){
+      world[x][y].a1 = NULL;
+      //printf("TOOOT\n");
+      //allAnimalsSIZE--;
+    }
   }
-  else if ((*a1).a == ACTION_ATTACK && (*a2).a != ACTION_BLOCK)
-    world[x][y].a2 = NULL;
-  else if ((*a2).a == ACTION_ATTACK && (*a1).a != ACTION_BLOCK)
-    world[x][y].a1 = NULL;
-  else if ((*a1).a == ACTION_EAT || (*a2).a == ACTION_EAT) //&& world[x][y].properties & PROPERTY_FOOD == PROPERTY_FOOD)
-    world[x][y].properties = world[x][y].properties ^ PROPERTY_FOOD;
-  else if ((*a1).a == ACTION_RIGHT && freePlace(x+1,y))
-    animalMoveHelper(x,y,1,1,0);
-  else if ((*a1).a == ACTION_LEFT && freePlace(x-1,y))
-    animalMoveHelper(x,y,1,-1,0);
-  else if ((*a1).a == ACTION_UP && freePlace(x,y-1))
-    animalMoveHelper(x,y,1,0,-1);
-  else if ((*a1).a == ACTION_DOWN && freePlace(x,y+1))
-    animalMoveHelper(x,y,1,0,1);
-  else if ((*a1).a == ACTION_RIGHT && freePlace(x+1,y))
-    animalMoveHelper(x,y,1,1,0);
-  else if ((*a2).a == ACTION_LEFT && freePlace(x-1,y))
-    animalMoveHelper(x,y,2,-1,0);
-  else if ((*a2).a == ACTION_UP && freePlace(x,y-1))
-    animalMoveHelper(x,y,2,0,-1);
-  else if ((*a2).a == ACTION_DOWN && freePlace(x,y+1))
-    animalMoveHelper(x,y,2,0,1);
-  else if ((*a2).a == ACTION_RIGHT && freePlace(x+1,y))
-    animalMoveHelper(x,y,2,1,0);
 
-    
+  if(a1 != NULL) {
+    //animalMoveHelper(x,y,1,1,0);
+    //printf("%u\n",(*a1).a);
+    //printf("%u\n",(*a1).a);
+    if ((*a1).a == ACTION_RIGHT && freePlace(x+1,y))
+      animalMoveHelper(x,y,1,1,0);
+    else if ((*a1).a == ACTION_LEFT && freePlace(x-1,y))
+      animalMoveHelper(x,y,1,-1,0);
+    else if ((*a1).a == ACTION_UP && freePlace(x,y-1))
+      animalMoveHelper(x,y,1,0,-1);
+    else if ((*a1).a == ACTION_DOWN && freePlace(x,y+1))
+      animalMoveHelper(x,y,1,0,1);
+    else if ((*a1).a == ACTION_RIGHT && freePlace(x+1,y))
+      animalMoveHelper(x,y,1,1,0);
+
+    (*a1).a = 0;
+  }
+  if (a2 != NULL){
+    if ((*a2).a == ACTION_LEFT && freePlace(x-1,y))
+      animalMoveHelper(x,y,2,-1,0);
+    else if ((*a2).a == ACTION_UP && freePlace(x,y-1))
+      animalMoveHelper(x,y,2,0,-1);
+    else if ((*a2).a == ACTION_DOWN && freePlace(x,y+1))
+      animalMoveHelper(x,y,2,0,1);
+    else if ((*a2).a == ACTION_RIGHT && freePlace(x+1,y))
+      animalMoveHelper(x,y,2,1,0);
+
+    (*a2).a = 0;
+  }
+
+  }
+
 }
 
-animal makeChild(animal, animal, int);
-void randolution(sa**, short);
+void stepWorld() {
+  for (int x=0; x < WORLDSIZE; x++) {
+    for (int y=0; y < WORLDSIZE; y++) {
+      tile t = world[x][y];
+      if(t.a1 != NULL)
+        stepAnimal(t.a1,x,y);
+      if(t.a2 != NULL)
+        stepAnimal(t.a2,x,y);
+    }
+  }
+  for (int x=0; x < WORLDSIZE; x++) {
+    for (int y=0; y < WORLDSIZE; y++) {
+      doActions(x,y);
+    }
+  }
+}
+
 
 int main(int argc, char *argv[]) {
     int posX = 100, posY = 100, width = 800, height = 600;
@@ -172,6 +231,19 @@ int main(int argc, char *argv[]) {
     SDL_Window *win = SDL_CreateWindow("Untitled", posX, posY, width, height, 0);
 
     SDL_Renderer *renderer = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
+
+    for (int i=5; i < NANIMALS/2; i++) {
+      allAnimalsSIZE++;
+      //sa d[NSTATES][NPERCEPTIONS]; //state translation function (States,Perception) -> (new State, Action)
+      animal a;
+      a.s = 0;
+      a.a = 0;
+      //a.d = malloc(sizeof(sa)*NSTATES*NPERCEPTIONS);
+      allAnimals[i] = a;
+      randolution(a.d,100);
+
+      world[i%WORLDSIZE][i/WORLDSIZE].a1 = &allAnimals[i];
+    }
 
     while (1) {
         SDL_Event e;
@@ -182,8 +254,19 @@ int main(int argc, char *argv[]) {
         }
 
         SDL_RenderClear(renderer);
-        SDL_RenderDrawPoint(renderer, 50, 50);
+        for (int x=0; x < WORLDSIZE; x++) {
+          for (int y=0; y < WORLDSIZE; y++) {
+            if (world[x][y].a1!=NULL)
+              SDL_RenderDrawPoint(renderer, x*5+2, y*5+2);
+            if (world[x][y].a2!=NULL)
+              SDL_RenderDrawPoint(renderer, x*5+3, y*5+3);
+          }
+        }
         SDL_RenderPresent(renderer);
+
+        stepWorld();
+        //sleep(0.1);
+        //printf("hello\n");
     }
 
     SDL_DestroyRenderer(renderer);
@@ -193,15 +276,13 @@ int main(int argc, char *argv[]) {
 }
 
 
-void randolution(sa** d, short p){
+void randolution(sa d[NSTATES][NPERCEPTIONS], short p){
 	for(byte i = 0; i < NPERCEPTIONS; ++i){
 	  for(byte j = 0; j < NSTATES; ++j){
 	    int r = rand()%100;
 	    if(r <= p){
-	      d[j][i].s = (char)rand()%NSTATES;
-	    }
-	    else{
-	      d[j][i].a = (char)rand()%NACTIONS;
+	      d[j][i].s = (byte)rand()%NSTATES;
+	      d[j][i].a = (byte)rand()%NACTIONS;
 	    }
 	  }	
 	}
