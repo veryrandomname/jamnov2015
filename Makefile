@@ -7,7 +7,7 @@ SDL_INCLUDE = -I/usr/local/include
 BIT_LIB = -L./bitarray -lbitarr
 BIT_INCLUDE = -I./bitarray
 # You may need to change -std=c++11 to -std=c++0x if your compiler is a bit older
-CXXFLAGS = -Wall -c $(SDL_INCLUDE) $(BIT_INCLUDE)
+CXXFLAGS = -Wall -c -O2 $(SDL_INCLUDE) $(BIT_INCLUDE)
 LDFLAGS = $(SDL_LIB) $(BIT_LIB) -lm
 EXE = wonderPopo 
 
